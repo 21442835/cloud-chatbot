@@ -1,4 +1,4 @@
 telegram
 configparser
 python-telegram-bot>=13.1
-pymysql
+pymysql.cursors
