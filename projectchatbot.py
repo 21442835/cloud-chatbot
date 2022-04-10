@@ -5,6 +5,7 @@ import configparser
 import logging
 import redis
 import pymysql.cursors
+import random
 
 
 connection=pymysql.connect(host='124.71.41.226', port=3306, user='root', password='Hkbucloud!', database='chatbot',charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
@@ -17,6 +18,8 @@ global cookvideo
 global cookdescribe
 global movieposter
 global movieid
+global moviename
+global movieposter
 
 
 flag=0
@@ -38,12 +41,12 @@ def main():
                         level=logging.INFO)
 
     # register a dispatcher to handle message: here we register an echo dispatcher
-    #echo_handlerp = MessageHandler(Filters.photo, echophoto)
+    echo_handlerp = MessageHandler(Filters.photo, echophoto)
     #echo_handlerl = MessageHandler(Filters.photo & Filters.text, upload)
     echo_handlert = MessageHandler(Filters.text & (~Filters.command), echo)
     echo_handlerv = MessageHandler(Filters.video, echovideo)
     #echo_handler = MessageHandler(Filters.photo & (~Filters.command), echo)
-    #dispatcher.add_handler(echo_handlerp)
+    dispatcher.add_handler(echo_handlerp)
     dispatcher.add_handler(echo_handlert)
     dispatcher.add_handler(echo_handlerv)
     #dispatcher.add_handler(echo_handlerl)
@@ -55,20 +58,27 @@ def main():
     dispatcher.add_handler(CommandHandler("cname", uploadcname))
     dispatcher.add_handler(CommandHandler("cdescribe", uploaddescribe))
     dispatcher.add_handler(CommandHandler("cook", cookreply))
-    #dispatcher.add_handler(CommandHandler("find", findmovie))
-    #dispatcher.add_handler(CommandHandler("write", mwrite))
+    dispatcher.add_handler(CommandHandler("find", findmovie))
+    dispatcher.add_handler(CommandHandler("write", mwrite))
+    dispatcher.add_handler(CommandHandler("read", mread))
+    dispatcher.add_handler(CommandHandler("createm", addmovie))
+
 
     # To start the bot:
     updater.start_polling()
     updater.idle()
 
 def setdefualt():
-    global cookname
+    global cooknames
     global cookvideo
     global cookdescribe
-    cookvideo='defualt'
-    cookdescribe='defualt'
-    cookname='defualt'
+    global movieposter
+    global moviename
+    cookvideo=''
+    cookdescribe=''
+    cooknames=''
+    moviename=''
+    movieposter=''
 
 
 def uploadcname(update, context):
@@ -76,7 +86,7 @@ def uploadcname(update, context):
     if flag==0:
         update.message.reply_text('you have not started upload cook function yet')
     elif flag==1:
-        cname = context.args[0]
+        cname = update.message.text[7:-1]
         global cookname
         cookname=cname
         update.message.reply_text('discribe your dish, using the function /cdescribe')
@@ -87,7 +97,7 @@ def uploaddescribe(update, context):
     if flag==0:
         update.message.reply_text('you have not started upload cook function yet')
     elif flag==1:
-        cd = context.args[0]
+        cd = update.message.text[11:]
         global cookdescribe
         cookdescribe=cd
         update.message.reply_text('now send your cooking video directly')
@@ -107,9 +117,12 @@ def echophoto(update,context: CallbackContext):
     logging.info(context)
     #logging.info(file.get_file())#file path
     global flag
-    global movieposter
+    print('flaginephotois',flag)
     if flag==2:
-        movieposter=file.file_id
+        global  moviename
+        print(file.file_id)
+        minsert(moviename,file.file_id)
+        flag=0
     elif flag==0:
         update.message.reply_photo(file)
 
@@ -149,16 +162,15 @@ def uploadcook():
 
 
 def cookreply(update:Update, context: CallbackContext): #reply the information of cook to user
-    cname = context.args[0]
+    cname = update.message.text[6:]
     logging.info(cname)
     reply=getvideo(cname)
     logging.info(reply['video'])
     update.message.reply_text('NAME: '+reply['cookname'])
     update.message.reply_text('DESCRIBE: '+ reply['describe'])
     update.message.reply_video(reply['video'])
-    setdefualt()
 
-'''
+
 def getvideo(cname):#get cook video from sql
     cursor=connection.cursor()
     try:
@@ -175,20 +187,21 @@ def getvideo(cname):#get cook video from sql
 
 def findmovie(update:Update, context: CallbackContext):
     global movieid
-    mname = context.args[0]
+    mname = update.message.text[6:]
     result=movieinsql(mname)
-    movieid=result
+    #print('mid:', movieid)
     if result:
+        movieid = result[0]['mid']
         #update.message.reply_text('If you want to read comment, please use function /read')
-        update.message.reply_text('If you want to write comment, please use function /write + your comment')
+        update.message.reply_text('If you want to write comment, please use function /write + your comment\nIf you want to read comment, please use function /read')
 
     else:
-        update.message.reply_text('No such movie in database, you can create a new one, by using function /creatm')
+        update.message.reply_text('No such movie in database, you can create a new one, by using function /createm + movie name')
 
 def movieinsql(mname):
     cursor = connection.cursor()
     try:
-        sql = "select mid from movie where m_name=%s"
+        sql = "select * from movie where m_name=%s"
         cursor.execute(sql, [mname])
         result = cursor.fetchall()
         return (result)
@@ -199,22 +212,85 @@ def movieinsql(mname):
 
 def mwrite(update, context):
     global  movieid
-    comment=context.args[0]
+    comment=update.message.text[7:]
+    #comment=context.args[0:-1]
+    print(comment)
+    cinsert(movieid,comment)
+    update.message.reply_text('comment finish')
+
+def cinsert(id,comment):
+    print(id)
+    print(comment)
+    cursor = connection.cursor()
     try:
-        cursor = connection.cursor()
         sql = 'insert into comment values(0,%s,%s);'
-        cursor.execute(sql, [comment, movieid['mid']])
+        cursor.execute(sql, [comment, id])
         connection.commit()
-        update.message.reply_text('comment finish')
     except:
         Exception: print("Fail")
     cursor.close()
-'''
+
+def mread(update:Update, context: CallbackContext):
+    global movieid
+    logging.info(movieid)
+    reply=getcomment(movieid)
+    reply2=getposter(movieid)
+    if len(reply)<4:
+        rsample=range(len(reply))
+    else:
+        rsample = (random.sample(range(1, len(reply)), 4))
+    update.message.reply_photo(reply2[0]['m_image'])
+    for i in rsample:
+        #update.message.reply_text('NAME: '+mname)
+        update.message.reply_text('Comment: \n'+ reply[i]['text'])
+
+    setdefualt()
+
+def getposter(id):
+    cursor = connection.cursor()
+    try:
+        sql = 'select * from movie where mid=%s;'
+        cursor.execute(sql,id)
+        result = cursor.fetchall()
+        return(result)
+    except:
+        Exception: print("Fail")
+    cursor.close()
+
+
+def getcomment(id):
+    cursor = connection.cursor()
+    try:
+        sql = 'select * from comment where mid=%s;'
+        cursor.execute(sql,id)
+        result = cursor.fetchall()
+        return(result)
+    except:
+        Exception: print("Fail")
+    cursor.close()
 
 
 
+def addmovie(update:Update, context: CallbackContext):
+    global flag
+    global moviename
+    moviename = context.args[0]
+    flag=2
+    print('flaginaddmovie',flag)
+    update.message.reply_text('please provide a poster for this movie')
 
 
+
+def minsert(name,poster):
+    cursor = connection.cursor()
+    try:
+        sql = 'insert into movie values(0,%s,%s);'
+        cursor.execute(sql, [name, poster])
+        connection.commit()
+    except:
+        Exception: print("Fail")
+    cursor.close()
+    setdefualt()
 
 
 
