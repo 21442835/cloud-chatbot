@@ -1,1 +1,1 @@
-python: python projectchatbot.py
+python: python try.py
