@@ -3,7 +3,6 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
 
 import configparser
 import logging
-import redis
 import pymysql.cursors
 import random
 
