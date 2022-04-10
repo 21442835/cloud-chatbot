@@ -8,9 +8,9 @@ import pymysql.cursors
 import random
 
 
-connection=pymysql.connect(host='124.71.41.226', port=3306, user='root', password='Hkbucloud!', database='chatbot',charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+#connection=pymysql.connect(host='124.71.41.226', port=3306, user='root', password='Hkbucloud!', database='chatbot')
 
-global redis1
+
 
 global flag
 global cookname
@@ -20,6 +20,7 @@ global movieposter
 global movieid
 global moviename
 global movieposter
+global connection
 
 
 flag=0
@@ -31,10 +32,11 @@ def main():
     updater = Updater(token=(config['TELEGRAM']['ACCESS_TOKEN']), use_context=True)
     dispatcher = updater.dispatcher
 
+    global connection
 
-    global redis1
-    redis1 = redis.Redis(host=(config['REDIS']['HOST']), password=(config['REDIS']['PASSWORD']),
-                         port=(config['REDIS']['REDISPORT']))
+    connection = pymysql.connect(host=(config['mysql']['HOST']), port=int((config['mysql']['PORT'])),
+                                 user=(config['mysql']['USER']), password=(config['mysql']['PASSWORD']),
+                                 database=(config['mysql']['DATABASE']))
 
     # You can set this logging module, so you will know when and why things do not work as expected
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
