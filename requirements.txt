@@ -1,4 +1,5 @@
 telegram
 configparser
-python-telegram-bot>=13.1
 pymysql
+python-telegram-bot>=13.1
+redis
