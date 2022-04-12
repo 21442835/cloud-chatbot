@@ -6,7 +6,6 @@ import logging
 import redis
 import pymysql.cursors
 import random
-import os
 
 """connection = pymysql.connect(host='124.71.41.226', port=3306, user='root', password='Hkbucloud!', database='chatbot',
                              charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)"""
@@ -28,20 +27,19 @@ flag = 0
 def main():
     # Load your token and create an Updater for your Bot
 
-    #config = configparser.ConfigParser()
-    #config.read('config.ini')
-    #updater = Updater(token=(config['TELEGRAM']['ACCESS_TOKEN']), use_context=True)
-    updater = Updater(token=(os.environ['ACCESS_TOKEN']), use_context=True)
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    updater = Updater(token=(config['TELEGRAM']['ACCESS_TOKEN']), use_context=True)
     dispatcher = updater.dispatcher
 
     global redis1
-    redis1 = redis.Redis(host=(os.environ['HOSTREDIS']), password=(os.environ['PASSWORDREDIS']), port=(os.environ['REDISPORT']))
-
+    redis1 = redis.Redis(host=(config['REDIS']['HOST']), password=(config['REDIS']['PASSWORD']),
+                         port=(config['REDIS']['REDISPORT']))
 
     global connection
-    connection = pymysql.connect(host=(os.environ['HOSTSQL']), port=int((os.environ['PORTSQL'])),
-                                 user=(os.environ['USERSQL']), password=(os.environ['PASSWORDSQL']),
-                                 database=(os.environ['DATABASESQL']))
+    connection = pymysql.connect(host=(config['mysql']['HOST']), port=int((config['mysql']['PORT'])),
+                                 user=(config['mysql']['USER']), password=(config['mysql']['PASSWORD']),
+                                 database=(config['mysql']['DATABASE']))
 
 
 
@@ -95,7 +93,7 @@ def uploadcname(update, context):
     if flag == 0:
         update.message.reply_text('you have not started upload cook function yet')
     elif flag == 1:
-        cname = update.message.text[7:-1]
+        cname = update.message.text[7:]
         global cookname
         cookname = cname
         update.message.reply_text('discribe your dish, using the function /cdescribe')
