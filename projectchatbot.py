@@ -8,9 +8,6 @@ import pymysql.cursors
 import random
 import os
 
-"""connection = pymysql.connect(host='124.71.41.226', port=3306, user='root', password='Hkbucloud!', database='chatbot',
-                             charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)"""
-
 global redis1
 
 global flag
@@ -50,14 +47,11 @@ def main():
 
     # register a dispatcher to handle message: here we register an echo dispatcher
     echo_handlerp = MessageHandler(Filters.photo, echophoto)
-    # echo_handlerl = MessageHandler(Filters.photo & Filters.text, upload)
     echo_handlert = MessageHandler(Filters.text & (~Filters.command), echo)
     echo_handlerv = MessageHandler(Filters.video, echovideo)
-    # echo_handler = MessageHandler(Filters.photo & (~Filters.command), echo)
     dispatcher.add_handler(echo_handlerp)
     dispatcher.add_handler(echo_handlert)
     dispatcher.add_handler(echo_handlerv)
-    # dispatcher.add_handler(echo_handlerl)
     # on different commands - answer in Telegram
     dispatcher.add_handler(CommandHandler("add", add))
     dispatcher.add_handler(CommandHandler("help", help_command))
@@ -70,6 +64,10 @@ def main():
     dispatcher.add_handler(CommandHandler("write", mwrite))
     dispatcher.add_handler(CommandHandler("read", mread))
     dispatcher.add_handler(CommandHandler("createm", addmovie))
+    dispatcher.add_handler(CommandHandler("start", guid))
+    dispatcher.add_handler(CommandHandler("guidance", guid))
+    dispatcher.add_handler(CommandHandler("listc", listcook))
+    dispatcher.add_handler(CommandHandler("listm", listmovie))
 
     # To start the bot:
     updater.start_polling()
@@ -87,6 +85,60 @@ def setdefualt():
     cooknames = ''
     moviename = ''
     movieposter = ''
+
+
+
+def guid(update, context):
+    update.message.reply_text('Welcome to team36 chatbot')
+    update.message.reply_text('/find + movie name : to view or write the comment of movie ')
+    update.message.reply_text('/listm  : to browse the list of movies (random select 4 each time)')
+    update.message.reply_text('/createm + movie name : to add a new movie ')
+    update.message.reply_text('/listc  : to browse the list of cooking videos (random select 4 each time)')
+    update.message.reply_text('/upload : to start upload your cooking video ')
+    update.message.reply_text('/guidance : to view guidance again ')
+
+
+def listcook(update, context):
+    reply=listcooksql()
+    if len(reply) < 4:
+        rsample = range(len(reply))
+    else:
+        rsample = (random.sample(range(1, len(reply)), 4))
+    for i in rsample:
+        update.message.reply_text('food name: \n' + reply[i][1])
+
+def listcooksql():
+    cursor = connection.cursor()
+    try:
+        sql = 'select * from cook;'
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        return (result)
+    except:
+        Exception: print("Fail")
+    cursor.close()
+
+
+def listmovie(update, context):
+    reply=listmoviesql()
+    print(len(reply))
+    if len(reply) <=4:
+        rsample = range(len(reply))
+    else:
+        rsample = (random.sample(range(1, len(reply)), 4))
+    for i in rsample:
+        update.message.reply_text('movie name: \n' + reply[i][1])
+
+def listmoviesql():
+    cursor = connection.cursor()
+    try:
+        sql = 'select * from movie;'
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        return (result)
+    except:
+        Exception: print("Fail")
+    cursor.close()
 
 
 def uploadcname(update, context):
@@ -119,16 +171,11 @@ def upload(update: Update, context: CallbackContext):  # start teh function to u
 
 def echophoto(update, context: CallbackContext):
     file = update.message.photo[-1]
-    # photo.download()
-    # logging.info(update)
     logging.info(context.args)
     logging.info(context)
-    # logging.info(file.get_file())#file path
     global flag
-    print('flaginephotois', flag)
     if flag == 2:
         global moviename
-        print(file.file_id)
         minsert(moviename, file.file_id)
         flag = 0
     elif flag == 0:
@@ -137,14 +184,12 @@ def echophoto(update, context: CallbackContext):
 
 def echovideo(update, context):
     file = update.message.video
-    # photo.download()
     logging.info(file.get_file())
     logging.info(file.file_id)
     global flag
     global cookvideo
     if flag == 1:  # means the following video will be uploaded
         cookvideo = file.file_id
-        # update.message.reply_video('BAACAgUAAxkBAAIBGmI-40QiXhxOHr5_8wXtGVTue-pQAAJpBAACOvn4VeaN3SkeMoWjIwQ')
         flag = 0
         uploadcook()
         update.message.reply_text('upload successfully')
@@ -163,7 +208,6 @@ def uploadcook():
         cursor.fetchall()
         connection.commit()
         setdefualt()
-        # cookreply()
     except:
         Exception: print("Fail")
     cursor.close()
@@ -197,10 +241,8 @@ def findmovie(update: Update, context: CallbackContext):
     global movieid
     mname = update.message.text[6:]
     result = movieinsql(mname)
-    print('result is ',result)
     if result:
         movieid = result[0][0]
-        # update.message.reply_text('If you want to read comment, please use function /read')
         update.message.reply_text(
             'If you want to write comment, please use function /write + your comment\nIf you want to read comment, please use function /read')
 
@@ -224,15 +266,11 @@ def movieinsql(mname):
 def mwrite(update, context):
     global movieid
     comment = update.message.text[7:]
-    # comment=context.args[0:-1]
-    print(comment)
     cinsert(movieid, comment)
     update.message.reply_text('comment finish')
 
 
 def cinsert(id, comment):
-    print(id)
-    print(comment)
     cursor = connection.cursor()
     try:
         sql = 'insert into comment values(0,%s,%s);'
@@ -254,7 +292,6 @@ def mread(update: Update, context: CallbackContext):
         rsample = (random.sample(range(1, len(reply)), 4))
     update.message.reply_photo(reply2[0][2])
     for i in rsample:
-        # update.message.reply_text('NAME: '+mname)
         update.message.reply_text('Comment: \n' + reply[i][1])
 
     setdefualt()
