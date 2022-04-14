@@ -341,6 +341,8 @@ def addmovie(update: Update, context: CallbackContext):
     flag = 2
     print('flaginaddmovie', flag)
     update.message.reply_text('please provide a poster for this movie')
+    update.message.reply_text(
+        'If there is no successful upload notification, please attempt upload a better quality poster')
 
 
 def minsert(name, poster):
