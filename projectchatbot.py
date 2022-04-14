@@ -93,6 +93,7 @@ def guid(update, context):
     update.message.reply_text('/find + movie name : to view or write the comment of movie ')
     update.message.reply_text('/listm  : to browse the list of movies (random select 4 each time)')
     update.message.reply_text('/createm + movie name : to add a new movie ')
+    update.message.reply_text('/cook + food name : to find the cooking video')
     update.message.reply_text('/listc  : to browse the list of cooking videos (random select 4 each time)')
     update.message.reply_text('/upload : to start upload your cooking video ')
     update.message.reply_text('/guidance : to view guidance again ')
@@ -176,7 +177,11 @@ def echophoto(update, context: CallbackContext):
     global flag
     if flag == 2:
         global moviename
-        minsert(moviename, file.file_id)
+        minserreply=minsert(moviename, file.file_id)
+        if minserreply==1:
+            update.message.reply_text('upload successfully')
+        else:
+            update.message.reply_text('please provide a poster with better quality')
         flag = 0
     elif flag == 0:
         update.message.reply_photo(file)
@@ -328,18 +333,26 @@ def addmovie(update: Update, context: CallbackContext):
     flag = 2
     print('flaginaddmovie', flag)
     update.message.reply_text('please provide a poster for this movie')
+    update.message.reply_text('If there is no successful upload notification, please attempt upload a better quality poster')
 
 
 def minsert(name, poster):
+
     cursor = connection.cursor()
     try:
         sql = 'insert into movie values(0,%s,%s);'
         cursor.execute(sql, [name, poster])
         connection.commit()
+        a=1
+        return (a)
     except:
+        a=0
         Exception: print("Fail")
+        return (a)
     cursor.close()
     setdefualt()
+
+
 
 
 def echo(update, context):
