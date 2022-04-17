@@ -330,10 +330,14 @@ def addmovie(update: Update, context: CallbackContext):
     global flag
     global moviename
     moviename = context.args[0]
-    flag = 2
-    print('flaginaddmovie', flag)
-    update.message.reply_text('please provide a poster for this movie')
-    update.message.reply_text('If there is no successful upload notification, please attempt upload a better quality poster')
+    if movieinsql(moviename):
+        update.message.reply_text(
+            'this movie already existed, please use /find +movie name to view or read the function')
+    else:
+        flag = 2
+        update.message.reply_text('please provide a poster for this movie')
+        update.message.reply_text(
+            'If there is no successful upload notification, please attempt upload a better quality poster')
 
 
 def minsert(name, poster):
