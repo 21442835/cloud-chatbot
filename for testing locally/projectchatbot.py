@@ -340,7 +340,7 @@ def addmovie(update: Update, context: CallbackContext):
     global moviename
     moviename = update.message.text[9:]
     if movieinsql(moviename):
-        update.message.reply_text('this movie already existed, please use /find +movie name to view or read the function')
+        update.message.reply_text('this movie already existed, please use /find +movie name to view or read the comment')
     else:
         flag = 2
         update.message.reply_text('please provide a poster for this movie')

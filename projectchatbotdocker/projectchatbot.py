@@ -129,6 +129,7 @@ def listmovie(update, context):
         rsample = (random.sample(range(1, len(reply)), 4))
     for i in rsample:
         update.message.reply_text('movie name: \n' + reply[i][1])
+        update.message.reply_photo(reply[i][2])
 
 def listmoviesql():
     cursor = connection.cursor()
@@ -329,10 +330,10 @@ def getcomment(id):
 def addmovie(update: Update, context: CallbackContext):
     global flag
     global moviename
-    moviename = context.args[0]
+    moviename = update.message.text[9:]
     if movieinsql(moviename):
         update.message.reply_text(
-            'this movie already existed, please use /find +movie name to view or read the function')
+            'this movie already existed, please use /find +movie name to view or read the comment')
     else:
         flag = 2
         update.message.reply_text('please provide a poster for this movie')
