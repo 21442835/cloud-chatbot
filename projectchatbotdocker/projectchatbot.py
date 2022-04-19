@@ -162,7 +162,7 @@ def uploaddescribe(update, context):
         cd = update.message.text[11:]
         global cookdescribe
         cookdescribe = cd
-        update.message.reply_text('now send your cooking video directly')
+        update.message.reply_text('now send your cooking video directly(size limitation is 20MB)')
 
 
 def upload(update: Update, context: CallbackContext):  # start teh function to upload cookvideo
